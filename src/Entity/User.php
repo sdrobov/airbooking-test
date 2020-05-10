@@ -10,6 +10,7 @@ use Lexik\Bundle\JWTAuthenticationBundle\Security\User\JWTUserInterface;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
+ * @ORM\Table(name="`user`")
  */
 class User implements JWTUserInterface
 {
@@ -22,7 +23,13 @@ class User implements JWTUserInterface
     private $id;
 
     /**
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", unique=true)
+     * @var string
+     */
+    private $username;
+
+    /**
+     * @ORM\Column(type="string", unique=true)
      * @var string
      */
     private $email;
@@ -91,7 +98,8 @@ class User implements JWTUserInterface
     public static function createFromPayload($username, array $payload)
     {
         $user = new static();
-        $user->setEmail($username);
+        $user->setEmail($payload['email']);
+        $user->setUsername($username);
 
         return $user;
     }
@@ -105,9 +113,9 @@ class User implements JWTUserInterface
     {
     }
 
-    public function getUsername()
+    public function getUsername(): ?string
     {
-        return $this->getEmail();
+        return $this->username;
     }
 
     public function eraseCredentials()
@@ -164,6 +172,13 @@ class User implements JWTUserInterface
                 $boughtSeat->setSelledTo(null);
             }
         }
+
+        return $this;
+    }
+
+    public function setUsername(string $username): self
+    {
+        $this->username = $username;
 
         return $this;
     }

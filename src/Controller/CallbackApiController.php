@@ -4,6 +4,7 @@
 namespace App\Controller;
 
 
+use App\Message\SendEmailMessage;
 use App\Repository\FlightRepository;
 use DateTime;
 use Doctrine\ORM\EntityManager;
@@ -11,10 +12,14 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 class CallbackApiController extends AbstractController
 {
+    public const EV_FLIGHT_SOLD_OUT = 'flight_ticket_sales_completed';
+    public const EV_FLIGHT_CANCELED = 'flight_canceled';
+
     /**
      * @Route("/api/v1/callback/events", methods={"POST"})
      *
@@ -26,7 +31,8 @@ class CallbackApiController extends AbstractController
     public function event(
         Request $request,
         FlightRepository $flightRepository,
-        EntityManager $em
+        EntityManager $em,
+        MessageBusInterface $messageBus
     ) {
         $payload = $request->request->get('data');
         $secretKey = $payload['secret_key'];
@@ -44,12 +50,12 @@ class CallbackApiController extends AbstractController
         }
 
         switch ($event) {
-            case 'flight_ticket_sales_completed':
+            case self::EV_FLIGHT_SOLD_OUT:
                 $flight->setFinishedAt(new DateTime());
 
                 break;
 
-            case 'flight_canceled':
+            case self::EV_FLIGHT_CANCELED:
                 $flight->setCanceledAt(new DateTime());
 
                 break;
@@ -60,6 +66,21 @@ class CallbackApiController extends AbstractController
 
         $em->persist($flight);
         $em->flush();
+
+        if ($event === self::EV_FLIGHT_CANCELED) {
+            foreach ($flight->getSeats() as $seat) {
+                if ($seat->getSelledTo() || $seat->getBookedBy()) {
+                    $user = $seat->getSelledTo() ?? $seat->getBookedBy();
+                    $messageBus->dispatch(
+                        new SendEmailMessage(
+                            $user,
+                            'Sorry, your flight was canceled :(',
+                            'Your flight canceled'
+                        )
+                    );
+                }
+            }
+        }
 
         return $this->json(['status' => 'ok']);
     }
