@@ -4,8 +4,36 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d5dd028d9d7f050a074a664b9a3e6436",
+    "content-hash": "e17df9989c570879b07051ea3a35a6b3",
     "packages": [
+        {
+            "name": "ajardin/docker-symfony",
+            "version": "v0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ajardin/docker-symfony.git",
+                "reference": "cef09bb2ae3f6760b62069fc4b0662a0c368c892"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ajardin/docker-symfony/zipball/cef09bb2ae3f6760b62069fc4b0662a0c368c892",
+                "reference": "cef09bb2ae3f6760b62069fc4b0662a0c368c892",
+                "shasum": ""
+            },
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Alexandre Jardin",
+                    "email": "info@ajardin.fr"
+                }
+            ],
+            "description": "Docker environment that meets Symfony requirements",
+            "time": "2018-11-14T12:59:13+00:00"
+        },
         {
             "name": "api-platform/api-pack",
             "version": "v1.2.2",

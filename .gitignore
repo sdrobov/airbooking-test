@@ -10,3 +10,8 @@
 ###< symfony/framework-bundle ###
 
 /.idea
+
+###> ajardin/docker-symfony ###
+/bin/docker-upgrade
+/docker/
+###< ajardin/docker-symfony ###

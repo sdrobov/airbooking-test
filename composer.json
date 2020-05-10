@@ -5,6 +5,7 @@
         "php": "^7.2.5",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ajardin/docker-symfony": "^0.4.0",
         "api-platform/api-pack": "^1.2",
         "symfony/console": "5.0.*",
         "symfony/dotenv": "5.0.*",
@@ -19,7 +20,10 @@
         "preferred-install": {
             "*": "dist"
         },
-        "sort-packages": true
+        "sort-packages": true,
+        "platform": {
+            "php": "7.2.*"
+        }
     },
     "autoload": {
         "psr-4": {
@@ -43,7 +47,8 @@
     "scripts": {
         "auto-scripts": {
             "cache:clear": "symfony-cmd",
-            "assets:install %PUBLIC_DIR%": "symfony-cmd"
+            "assets:install %PUBLIC_DIR%": "symfony-cmd",
+            "bin/docker-upgrade": "php-script"
         },
         "post-install-cmd": [
             "@auto-scripts"

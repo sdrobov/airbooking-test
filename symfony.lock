@@ -1,4 +1,16 @@
 {
+    "ajardin/docker-symfony": {
+        "version": "0.2",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "master",
+            "version": "0.2",
+            "ref": "2a715ab14f303ff7edb833b302a810750f3b3487"
+        },
+        "files": [
+            "bin/docker-upgrade"
+        ]
+    },
     "api-platform/api-pack": {
         "version": "v1.2.2"
     },
@@ -98,7 +110,7 @@
         "version": "1.5.1"
     },
     "php": {
-        "version": "7.3"
+        "version": "7.2.*"
     },
     "phpdocumentor/reflection-common": {
         "version": "2.1.0"
