@@ -13,6 +13,8 @@ use DateTime;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
+use JMS\Serializer\Serializer;
+use JMS\Serializer\SerializerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
@@ -25,10 +27,14 @@ class SeatApiController extends AbstractController
     /** @var FlightRepository */
     private $flightRepository;
 
-    public function __construct(SeatRepository $seatRepository, FlightRepository $flightRepository)
+    /** @var Serializer */
+    private $serializer;
+
+    public function __construct(SeatRepository $seatRepository, FlightRepository $flightRepository, SerializerInterface $serializer)
     {
         $this->seatRepository = $seatRepository;
         $this->flightRepository = $flightRepository;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -46,9 +52,11 @@ class SeatApiController extends AbstractController
             function (Seat $seat) {
                 return $seat->getBookedAt() === null && $seat->getSelledAt() === null;
             }
-        );
+        )->map(function (Seat $seat) {
+            return $this->seatToArray($seat);
+        });
 
-        return $this->json($seats);
+        return $this->json($seats->toArray());
     }
 
     /**
@@ -71,7 +79,7 @@ class SeatApiController extends AbstractController
         $ourSeat = null;
         foreach ($flight->getSeats() as $seat) {
             if (
-                $seat->getSeatNum() === (int)$seatNum
+                $seat->getSeatNum() == $seatNum
                 && $seat->getSelledAt() === null
                 && (
                     $seat->getBookedAt() === null
@@ -99,7 +107,7 @@ class SeatApiController extends AbstractController
             $em->flush();
         }
 
-        return $this->json($ourSeat);
+        return $this->json($this->seatToArray($ourSeat));
     }
 
     /**
@@ -122,7 +130,7 @@ class SeatApiController extends AbstractController
         $ourSeat = null;
         foreach ($flight->getSeats() as $seat) {
             if (
-                $seat->getSeatNum() === (int)$seatNum
+                $seat->getSeatNum() == $seatNum
                 && (
                     $seat->getSelledAt() === null
                     || $user->getBoughtSeats()->contains($seat)
@@ -153,7 +161,7 @@ class SeatApiController extends AbstractController
             $em->flush();
         }
 
-        return $this->json($ourSeat);
+        return $this->json($this->seatToArray($ourSeat));
     }
 
     /**
@@ -174,8 +182,9 @@ class SeatApiController extends AbstractController
         $ourSeat = null;
         foreach ($user->getBookedSeats() as $seat) {
             if (
-                $seat->getFlight() === (int)$flightId
-                && $seat->getSeatNum() === (int)$seatNum
+                $seat->getFlight()->getId() == $flightId
+                && $seat->getSeatNum() == $seatNum
+                && $seat->getSelledAt() === null
             ) {
                 $ourSeat = $seat;
 
@@ -266,5 +275,17 @@ class SeatApiController extends AbstractController
         }
 
         return $flight;
+    }
+
+    /**
+     * @param Seat $seat
+     * @return array
+     */
+    private function seatToArray(Seat $seat): array
+    {
+        $arr = $this->serializer->toArray($seat);
+        unset($arr['flight'], $arr['booked_by'], $arr['selled_to']);
+
+        return $arr;
     }
 }

@@ -45,7 +45,7 @@ class FlightApiController extends AbstractController
             ->setMaxResults($limit)
             ->setFirstResult($offset)
             ->getQuery()
-            ->getResult();
+            ->getArrayResult();
 
         return $this->json($flights);
     }
