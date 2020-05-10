@@ -6,14 +6,20 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "ajardin/docker-symfony": "^0.4.0",
-        "api-platform/api-pack": "^1.2",
+        "doctrine/doctrine-bundle": "^2.0",
+        "doctrine/orm": "^2.7",
+        "lexik/jwt-authentication-bundle": "^2.6",
         "symfony/console": "5.0.*",
         "symfony/dotenv": "5.0.*",
         "symfony/flex": "^1.3.1",
         "symfony/framework-bundle": "5.0.*",
+        "symfony/mailer": "5.0.*",
+        "symfony/messenger": "5.0.*",
+        "symfony/orm-pack": "^1.0",
         "symfony/yaml": "5.0.*"
     },
     "require-dev": {
+        "symfony/maker-bundle": "^1.17",
         "roave/security-advisories": "dev-master"
     },
     "config": {
@@ -22,7 +28,7 @@
         },
         "sort-packages": true,
         "platform": {
-            "php": "7.2.*"
+            "php": "7.2.5"
         }
     },
     "autoload": {

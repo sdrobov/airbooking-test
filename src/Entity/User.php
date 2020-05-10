@@ -1,19 +1,16 @@
 <?php
 
-
 namespace App\Entity;
 
-use DateTime;
+use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Class Flight
- * @package App\Entity
- * @ORM\Entity(repositoryClass="App\Repository\FlightRepository")
+ * @ORM\Entity(repositoryClass=UserRepository::class)
  */
-class Flight
+class User
 {
     /**
      * @ORM\Id()
@@ -24,19 +21,19 @@ class Flight
     private $id;
 
     /**
-     * @ORM\Column(type="datetime", nullable=true)
-     * @var DateTime|null
+     * @ORM\Column(type="string")
+     * @var string
      */
-    private $finishedAt = null;
+    private $email;
 
     /**
-     * @ORM\Column(type="datetime", nullable=true)
-     * @var DateTime|null
+     * @ORM\Column(type="string")
+     * @var string
      */
-    private $canceledAt = null;
+    private $password;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Seat", mappedBy="flight")
+     * @ORM\OneToMany(targetEntity="App\Entity\Seat", mappedBy="bookedBy")
      * @var Seat[]|ArrayCollection
      */
     private $seats;
@@ -51,26 +48,14 @@ class Flight
         return $this->id;
     }
 
-    public function getFinishedAt(): ?\DateTimeInterface
+    public function getEmail(): ?string
     {
-        return $this->finishedAt;
+        return $this->email;
     }
 
-    public function setFinishedAt(?\DateTimeInterface $finishedAt): self
+    public function setEmail(string $email): self
     {
-        $this->finishedAt = $finishedAt;
-
-        return $this;
-    }
-
-    public function getCanceledAt(): ?\DateTimeInterface
-    {
-        return $this->canceledAt;
-    }
-
-    public function setCanceledAt(?\DateTimeInterface $canceledAt): self
-    {
-        $this->canceledAt = $canceledAt;
+        $this->email = $email;
 
         return $this;
     }
@@ -83,19 +68,11 @@ class Flight
         return $this->seats;
     }
 
-    /**
-     * @param Seat[]|ArrayCollection $seats
-     */
-    public function setSeats($seats): void
-    {
-        $this->seats = $seats;
-    }
-
     public function addSeat(Seat $seat): self
     {
         if (!$this->seats->contains($seat)) {
             $this->seats[] = $seat;
-            $seat->setFlight($this);
+            $seat->setBookedBy($this);
         }
 
         return $this;
@@ -106,10 +83,22 @@ class Flight
         if ($this->seats->contains($seat)) {
             $this->seats->removeElement($seat);
             // set the owning side to null (unless already changed)
-            if ($seat->getFlight() === $this) {
-                $seat->setFlight(null);
+            if ($seat->getBookedBy() === $this) {
+                $seat->setBookedBy(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getPassword(): ?string
+    {
+        return $this->password;
+    }
+
+    public function setPassword(string $password): self
+    {
+        $this->password = $password;
 
         return $this;
     }

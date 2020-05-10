@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Class Seat
  * @package App\Entity
- * @ORM\Entity()
+ * @ORM\Entity(repositoryClass="App\Repository\SeatRepository")
  */
 class Seat
 {
@@ -35,6 +35,12 @@ class Seat
     private $bookedAt = null;
 
     /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="seats")
+     * @var User|null
+     */
+    private $bookedBy = null;
+
+    /**
      * @ORM\Column(type="datetime", nullable=true)
      * @var DateTime|null
      */
@@ -52,91 +58,80 @@ class Seat
      */
     private $flight;
 
-    /**
-     * @return int
-     */
-    public function getId(): int
+    public function getId(): ?string
     {
         return $this->id;
     }
 
-    /**
-     * @return int
-     */
-    public function getSeatNum(): int
+    public function getSeatNum(): ?string
     {
         return $this->seatNum;
     }
 
-    /**
-     * @param int $seatNum
-     */
-    public function setSeatNum(int $seatNum): void
+    public function setSeatNum(string $seatNum): self
     {
         $this->seatNum = $seatNum;
+
+        return $this;
     }
 
-    /**
-     * @return DateTime|null
-     */
-    public function getBookedAt(): ?DateTime
+    public function getBookedAt(): ?\DateTimeInterface
     {
         return $this->bookedAt;
     }
 
-    /**
-     * @param DateTime|null $bookedAt
-     */
-    public function setBookedAt(?DateTime $bookedAt): void
+    public function setBookedAt(?\DateTimeInterface $bookedAt): self
     {
         $this->bookedAt = $bookedAt;
+
+        return $this;
     }
 
-    /**
-     * @return DateTime|null
-     */
-    public function getSelledAt(): ?DateTime
+    public function getSelledAt(): ?\DateTimeInterface
     {
         return $this->selledAt;
     }
 
-    /**
-     * @param DateTime|null $selledAt
-     */
-    public function setSelledAt(?DateTime $selledAt): void
+    public function setSelledAt(?\DateTimeInterface $selledAt): self
     {
         $this->selledAt = $selledAt;
+
+        return $this;
     }
 
-    /**
-     * @return DateTime|null
-     */
-    public function getReturnedAt(): ?DateTime
+    public function getReturnedAt(): ?\DateTimeInterface
     {
         return $this->returnedAt;
     }
 
-    /**
-     * @param DateTime|null $returnedAt
-     */
-    public function setReturnedAt(?DateTime $returnedAt): void
+    public function setReturnedAt(?\DateTimeInterface $returnedAt): self
     {
         $this->returnedAt = $returnedAt;
+
+        return $this;
     }
 
-    /**
-     * @return Flight
-     */
-    public function getFlight(): Flight
+    public function getFlight(): ?Flight
     {
         return $this->flight;
     }
 
-    /**
-     * @param Flight $flight
-     */
-    public function setFlight(Flight $flight): void
+    public function setFlight(?Flight $flight): self
     {
         $this->flight = $flight;
+
+        return $this;
+    }
+
+    public function getBookedBy(): ?User
+    {
+        return $this->bookedBy;
+    }
+
+    public function setBookedBy(?User $bookedBy): self
+    {
+        $this->bookedBy = $bookedBy;
+
+        return $this;
     }
 }
