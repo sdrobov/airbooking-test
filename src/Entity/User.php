@@ -6,11 +6,12 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Lexik\Bundle\JWTAuthenticationBundle\Security\User\JWTUserInterface;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
  */
-class User
+class User implements JWTUserInterface
 {
     /**
      * @ORM\Id()
@@ -36,11 +37,18 @@ class User
      * @ORM\OneToMany(targetEntity="App\Entity\Seat", mappedBy="bookedBy")
      * @var Seat[]|ArrayCollection
      */
-    private $seats;
+    private $bookedSeats;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Seat", mappedBy="selledTo")
+     * @var Seat[]|ArrayCollection
+     */
+    private $boughtSeats;
 
     public function __construct()
     {
-        $this->seats = new ArrayCollection();
+        $this->bookedSeats = new ArrayCollection();
+        $this->boughtSeats = new ArrayCollection();
     }
 
     public function getId(): ?string
@@ -63,32 +71,9 @@ class User
     /**
      * @return Collection|Seat[]
      */
-    public function getSeats(): Collection
+    public function getBookedSeats(): Collection
     {
-        return $this->seats;
-    }
-
-    public function addSeat(Seat $seat): self
-    {
-        if (!$this->seats->contains($seat)) {
-            $this->seats[] = $seat;
-            $seat->setBookedBy($this);
-        }
-
-        return $this;
-    }
-
-    public function removeSeat(Seat $seat): self
-    {
-        if ($this->seats->contains($seat)) {
-            $this->seats->removeElement($seat);
-            // set the owning side to null (unless already changed)
-            if ($seat->getBookedBy() === $this) {
-                $seat->setBookedBy(null);
-            }
-        }
-
-        return $this;
+        return $this->bookedSeats;
     }
 
     public function getPassword(): ?string
@@ -99,6 +84,86 @@ class User
     public function setPassword(string $password): self
     {
         $this->password = $password;
+
+        return $this;
+    }
+
+    public static function createFromPayload($username, array $payload)
+    {
+        $user = new static();
+        $user->setEmail($username);
+
+        return $user;
+    }
+
+    public function getRoles()
+    {
+        return [];
+    }
+
+    public function getSalt()
+    {
+    }
+
+    public function getUsername()
+    {
+        return $this->getEmail();
+    }
+
+    public function eraseCredentials()
+    {
+    }
+
+    public function addBookedSeat(Seat $bookedSeat): self
+    {
+        if (!$this->bookedSeats->contains($bookedSeat)) {
+            $this->bookedSeats[] = $bookedSeat;
+            $bookedSeat->setBookedBy($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBookedSeat(Seat $bookedSeat): self
+    {
+        if ($this->bookedSeats->contains($bookedSeat)) {
+            $this->bookedSeats->removeElement($bookedSeat);
+            // set the owning side to null (unless already changed)
+            if ($bookedSeat->getBookedBy() === $this) {
+                $bookedSeat->setBookedBy(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Seat[]
+     */
+    public function getBoughtSeats(): Collection
+    {
+        return $this->boughtSeats;
+    }
+
+    public function addBoughtSeat(Seat $boughtSeat): self
+    {
+        if (!$this->boughtSeats->contains($boughtSeat)) {
+            $this->boughtSeats[] = $boughtSeat;
+            $boughtSeat->setSelledTo($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBoughtSeat(Seat $boughtSeat): self
+    {
+        if ($this->boughtSeats->contains($boughtSeat)) {
+            $this->boughtSeats->removeElement($boughtSeat);
+            // set the owning side to null (unless already changed)
+            if ($boughtSeat->getSelledTo() === $this) {
+                $boughtSeat->setSelledTo(null);
+            }
+        }
 
         return $this;
     }

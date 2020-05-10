@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\Flight;
 use App\Entity\Seat;
+use App\Entity\User;
 use App\Repository\FlightRepository;
 use App\Repository\SeatRepository;
 use DateTime;
@@ -13,9 +14,7 @@ use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-
 use Symfony\Component\HttpFoundation\JsonResponse;
-
 use Symfony\Component\Routing\Annotation\Route;
 
 class SeatApiController extends AbstractController
@@ -43,9 +42,11 @@ class SeatApiController extends AbstractController
     {
         $flight = $this->getFlight($flightId);
 
-        $seats = $flight->getSeats()->filter(function (Seat $seat) {
-            return $seat->getBookedAt() === null && $seat->getSelledAt() === null;
-        });
+        $seats = $flight->getSeats()->filter(
+            function (Seat $seat) {
+                return $seat->getBookedAt() === null && $seat->getSelledAt() === null;
+            }
+        );
 
         return $this->json($seats);
     }
@@ -63,6 +64,8 @@ class SeatApiController extends AbstractController
     public function bookSeat($flightId, $seatNum): JsonResponse
     {
         $flight = $this->getFlight($flightId);
+        /** @var User $user */
+        $user = $this->getUser();
 
         /** @var Seat $ourSeat */
         $ourSeat = null;
@@ -70,7 +73,10 @@ class SeatApiController extends AbstractController
             if (
                 $seat->getSeatNum() === (int)$seatNum
                 && $seat->getSelledAt() === null
-                && $seat->getBookedAt() === null
+                && (
+                    $seat->getBookedAt() === null
+                    || $user->getBookedSeats()->contains($seat)
+                )
             ) {
                 $ourSeat = $seat;
 
@@ -82,13 +88,16 @@ class SeatApiController extends AbstractController
             throw $this->createNotFoundException("Seat {$seatNum} in flight {$flightId} not found");
         }
 
-        $ourSeat->setBookedAt(new DateTime());
+        if ($ourSeat->getBookedAt() === null) {
+            $user->addBookedSeat($ourSeat);
+            $ourSeat->setBookedAt(new DateTime());
 
-        $em = $this->seatRepository
-            ->createQueryBuilder('s')
-            ->getEntityManager();
-        $em->persist($ourSeat);
-        $em->flush();
+            $em = $this->seatRepository
+                ->createQueryBuilder('s')
+                ->getEntityManager();
+            $em->persist($ourSeat);
+            $em->flush();
+        }
 
         return $this->json($ourSeat);
     }
@@ -106,14 +115,23 @@ class SeatApiController extends AbstractController
     public function buySeat($flightId, $seatNum): JsonResponse
     {
         $flight = $this->getFlight($flightId);
+        /** @var User $user */
+        $user = $this->getUser();
 
         /** @var Seat $ourSeat */
         $ourSeat = null;
         foreach ($flight->getSeats() as $seat) {
-            if ($seat->getSeatNum() === (int)$seatNum && $seat->getSelledAt() === null) {
-                if ($seat->getBookedAt() === null || $seat->getBookedBy()) {
-
-                }
+            if (
+                $seat->getSeatNum() === (int)$seatNum
+                && (
+                    $seat->getSelledAt() === null
+                    || $user->getBoughtSeats()->contains($seat)
+                )
+                && (
+                    $seat->getBookedAt() === null
+                    || $user->getBookedSeats()->contains($seat)
+                )
+            ) {
                 $ourSeat = $seat;
 
                 break;
@@ -124,7 +142,53 @@ class SeatApiController extends AbstractController
             throw $this->createNotFoundException("Seat {$seatNum} in flight {$flightId} not found");
         }
 
-        $ourSeat->setBookedAt(new DateTime());
+        if ($ourSeat->getSelledAt() !== null) {
+            $user->addBoughtSeat($ourSeat);
+            $ourSeat->setSelledAt(new DateTime());
+
+            $em = $this->seatRepository
+                ->createQueryBuilder('s')
+                ->getEntityManager();
+            $em->persist($ourSeat);
+            $em->flush();
+        }
+
+        return $this->json($ourSeat);
+    }
+
+    /**
+     * @Route("/api/v1/flight/{flightId}/seat/{seatNum}/book", methods={"DELETE"})
+     *
+     * @param $flightId
+     * @param $seatNum
+     * @return JsonResponse
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function cancelBook($flightId, $seatNum): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        /** @var Seat $ourSeat */
+        $ourSeat = null;
+        foreach ($user->getBookedSeats() as $seat) {
+            if (
+                $seat->getFlight() === (int)$flightId
+                && $seat->getSeatNum() === (int)$seatNum
+            ) {
+                $ourSeat = $seat;
+
+                break;
+            }
+        }
+
+        if (!$ourSeat) {
+            throw $this->createNotFoundException("Seat {$seatNum} in flight {$flightId} not found");
+        }
+
+        $user->removeBookedSeat($ourSeat);
+        $ourSeat->setBookedAt(null);
 
         $em = $this->seatRepository
             ->createQueryBuilder('s')
@@ -132,7 +196,52 @@ class SeatApiController extends AbstractController
         $em->persist($ourSeat);
         $em->flush();
 
-        return $this->json($ourSeat);
+        return $this->json(['status' => 'ok']);
+    }
+
+    /**
+     * @Route("/api/v1/flight/{flightId}/seat/{seatNum}/buy", methods={"DELETE"})
+     *
+     * @param $flightId
+     * @param $seatNum
+     * @return JsonResponse
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function cancelBuy($flightId, $seatNum): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        /** @var Seat $ourSeat */
+        $ourSeat = null;
+        foreach ($user->getBoughtSeats() as $seat) {
+            if (
+                $seat->getFlight() === (int)$flightId
+                && $seat->getSeatNum() === (int)$seatNum
+            ) {
+                $ourSeat = $seat;
+
+                break;
+            }
+        }
+
+        if (!$ourSeat) {
+            throw $this->createNotFoundException("Seat {$seatNum} in flight {$flightId} not found");
+        }
+
+        $user->removeBoughtSeat($ourSeat);
+        $ourSeat->setSelledAt(null);
+        $ourSeat->setBookedAt(null);
+        $ourSeat->setBookedBy(null);
+
+        $em = $this->seatRepository
+            ->createQueryBuilder('s')
+            ->getEntityManager();
+        $em->persist($ourSeat);
+        $em->flush();
+
+        return $this->json(['status' => 'ok']);
     }
 
     /**

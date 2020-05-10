@@ -35,7 +35,7 @@ class Seat
     private $bookedAt = null;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="seats")
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="bookedSeats")
      * @var User|null
      */
     private $bookedBy = null;
@@ -47,10 +47,10 @@ class Seat
     private $selledAt = null;
 
     /**
-     * @ORM\Column(type="datetime", nullable=true)
-     * @var DateTime|null
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="boughtSeats")
+     * @var User|null
      */
-    private $returnedAt = null;
+    private $selledTo = null;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Flight", inversedBy="seats")
@@ -99,18 +99,6 @@ class Seat
         return $this;
     }
 
-    public function getReturnedAt(): ?\DateTimeInterface
-    {
-        return $this->returnedAt;
-    }
-
-    public function setReturnedAt(?\DateTimeInterface $returnedAt): self
-    {
-        $this->returnedAt = $returnedAt;
-
-        return $this;
-    }
-
     public function getFlight(): ?Flight
     {
         return $this->flight;
@@ -131,6 +119,18 @@ class Seat
     public function setBookedBy(?User $bookedBy): self
     {
         $this->bookedBy = $bookedBy;
+
+        return $this;
+    }
+
+    public function getSelledTo(): ?User
+    {
+        return $this->selledTo;
+    }
+
+    public function setSelledTo(?User $selledTo): self
+    {
+        $this->selledTo = $selledTo;
 
         return $this;
     }
